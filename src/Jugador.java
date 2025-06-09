@@ -1,10 +1,18 @@
-public class Jugador {
-    private int fila;
-    private int columna;
+import Game.Board;
+import Game.CeldaType;
 
-    public Jugador(int fila, int columna) {
+public class Jugador {
+    private int fila, columna;
+    private int xPix, yPix;
+    private final int tamCelda;
+    private boolean moviendo = false;
+
+    public Jugador(int fila, int columna, int tamCelda) {
         this.fila = fila;
         this.columna = columna;
+        this.tamCelda = tamCelda;
+        this.xPix = columna * tamCelda;
+        this.yPix = fila * tamCelda;
     }
 
     public int getFila() {
@@ -15,28 +23,51 @@ public class Jugador {
         return columna;
     }
 
-    public void mover(int dfila, int dcolumna, Board board) {
+    public int getXPix() {
+        return xPix;
+    }
+
+    public int getYPix() {
+        return yPix;
+    }
+
+    public boolean estaMoviendo() {
+        return moviendo;
+    }
+
+    // Este método solo inicia el movimiento, la animación se hace en otro lado
+    public boolean mover(int dfila, int dcol, Board board) {
+        if (moviendo) return false;
+
         int nuevaFila = fila + dfila;
-        int nuevaCol = columna + dcolumna;
+        int nuevaCol = columna + dcol;
 
-        // Validar límites
-        if (nuevaFila < 0 || nuevaFila >= board.getLineas() || nuevaCol < 0 || nuevaCol >= board.getColumnas()) {
-            return;
-        }
+        if (nuevaFila < 0 || nuevaFila >= board.getLineas() || nuevaCol < 0 || nuevaCol >= board.getColumnas())
+            return false;
 
-        // Validar que no sea un muro
-        if (board.getCell(nuevaFila, nuevaCol) == CeldaType.MURO) {
-            return;
-        }
+        if (board.getCell(nuevaFila, nuevaCol) == CeldaType.MURO)
+            return false;
 
-        // Limpiar celda actual
         board.setCell(fila, columna, CeldaType.EMPTY);
-
-        // Mover
         fila = nuevaFila;
         columna = nuevaCol;
-
-        // Actualizar celda nueva
         board.setCell(fila, columna, CeldaType.PLAYER);
+
+        moviendo = true;
+        return true;
+    }
+
+    public void animarPaso() {
+        int destinoX = columna * tamCelda;
+        int destinoY = fila * tamCelda;
+
+        if (xPix < destinoX) xPix += 2;
+        if (xPix > destinoX) xPix -= 2;
+        if (yPix < destinoY) yPix += 2;
+        if (yPix > destinoY) yPix -= 2;
+
+        if (xPix == destinoX && yPix == destinoY) {
+            moviendo = false;
+        }
     }
 }

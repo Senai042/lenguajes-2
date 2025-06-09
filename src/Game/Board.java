@@ -1,3 +1,5 @@
+package Game;
+
 public class Board {
     private final int lineas;
     private final int columnas;
@@ -21,8 +23,7 @@ public class Board {
         // Colocar algunos muros y un jugador como ejemplo
         grid[1][1] = CeldaType.PLAYER;
         grid[2][3] = CeldaType.MURO;
-        grid[4][4] = CeldaType.MALOVER;
-        grid[6][2] = CeldaType.OBJETIVO;
+
     }
 
     public CeldaType getCell(int row, int col) {
