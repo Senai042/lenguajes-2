@@ -26,6 +26,11 @@ public class Tanque {
     private boolean moviendo = false;
     private final int velocidad;
 
+    //balas
+    private long tiempoUltimoDisparo = 0;
+    private final long COOLDOWN_DISPARO = 500; // milisegundos
+
+
     public Tanque(int row, int col, int lives, String ability, Color color, boolean isPlayer, int velocidad) {
         this.linea = row;
         this.columna = col;
@@ -111,17 +116,22 @@ public class Tanque {
         return moviendo;
     }
 
-    public void receiveDamage() {
+    public boolean recibirDanno() {
         vidas--;
-    }
-
-    public boolean isAlive() {
-        return vidas > 0;
+        return vidas <=0;
     }
 
     public Bala shoot() {
-        return new Bala(linea, columna, direccion);
+        long ahora = System.currentTimeMillis();
+
+        if (ahora - tiempoUltimoDisparo >= COOLDOWN_DISPARO) {
+            tiempoUltimoDisparo = ahora;
+            return new Bala(linea, columna, direccion);
+        } else {
+            return null; // aún en cooldown
+        }
     }
+
 
     public int getLinea() {
         return linea;
@@ -151,6 +161,13 @@ public class Tanque {
         return vidas;
     }
 
+    public int getXPix() {
+        return xPix;
+    }
+
+    public int getYPix() {
+        return yPix;
+    }
     public void setPosition(int row, int col) {
         this.linea = row;
         this.columna = col;
@@ -170,6 +187,10 @@ public class Tanque {
             case RIGHT -> Math.PI / 2;
             case DOWN -> Math.PI;
             case LEFT -> -Math.PI / 2;
+            case UP_LEFT -> 0.0;
+            case UP_RIGHT -> 0.0;
+            case DOWN_LEFT -> 0.0;
+            case DOWN_RIGHT -> 0.0;
         };
 
         AffineTransform old = g2d.getTransform(); // guardamos el estado original

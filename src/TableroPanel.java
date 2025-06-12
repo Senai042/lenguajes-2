@@ -1,3 +1,4 @@
+import Entidades.Bala;
 import Entidades.Tanque;
 import Game.Board;
 import Game.CeldaType;
@@ -11,14 +12,15 @@ public class TableroPanel extends JPanel {
     private final int TAMACELD;
     private final Tanque jugador;
     private final List<Tanque> enemigos;
+    private final List<Bala> balas;
     private Image fondo;
-    private Image muros
-            ;
-    public TableroPanel(Board board, int tamaceld, Tanque jugador, List<Tanque> enemigos) {
+    private Image muros;
+    public TableroPanel(Board board, int tamaceld, Tanque jugador, List<Tanque> enemigos,List<Bala> balas) {
         this.board = board;
         this.TAMACELD = tamaceld;
         this.jugador = jugador;
         this.enemigos = enemigos;
+        this.balas = balas;
         setPreferredSize(new Dimension(board.getColumnas() * TAMACELD, board.getLineas() * TAMACELD));
         setBackground(Color.BLACK);
 
@@ -48,6 +50,9 @@ public class TableroPanel extends JPanel {
             enemigo.draw(g);
         }
         jugador.draw(g);
+        for (Bala bala : balas) {
+            bala.draw(g);
+        }
     }
 
     private void drawCell(Graphics g, int row, int col) {
