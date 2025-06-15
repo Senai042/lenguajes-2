@@ -41,4 +41,9 @@ public class Board {
     public int getColumnas() {
         return columnas;
     }
+
+    public boolean isWall(int row, int col) {
+        return getCell(row, col) == CeldaType.MURO;
+    }
+
 }

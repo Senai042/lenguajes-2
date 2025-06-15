@@ -7,6 +7,7 @@ import javax.imageio.ImageIO;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 
 public class Tanque {
     private int linea, columna;
@@ -88,11 +89,50 @@ public class Tanque {
         if (board.getCell(nuevaLinea, nuevaCol) == CeldaType.MURO)
             return false;
 
+
         board.setCell(linea, columna, CeldaType.EMPTY);
         linea = nuevaLinea;
         columna = nuevaCol;
         board.setCell(linea, columna, tipo);
 
+        this.direccion = dir;
+        moviendo = true;
+        return true;
+    }
+
+    public boolean moverAnimado(Direccion dir, CeldaType tipo, Board board, List<Tanque> otros) {
+        if (moviendo) return false;
+
+        int nuevaLinea = linea;
+        int nuevaCol = columna;
+
+        switch (dir) {
+            case UP -> nuevaLinea--;
+            case DOWN -> nuevaLinea++;
+            case LEFT -> nuevaCol--;
+            case RIGHT -> nuevaCol++;
+        }
+        // Primero verificamos muros
+        if (nuevaLinea < 0 ||
+                nuevaLinea >= board.getLineas() ||
+                nuevaCol < 0 ||
+                nuevaCol >= board.getColumnas()) {
+            return false;
+        }
+        if (board.getCell(nuevaLinea, nuevaCol) == CeldaType.MURO) {
+            return false;
+        }
+        // Después verificamos tanques
+        for (Tanque t : otros) {
+            if (t != this && t.linea == nuevaLinea && t.columna == nuevaCol) {
+                return false;
+            }
+        }
+        // Finalmente podemos mover
+        board.setCell(linea, columna, CeldaType.EMPTY);
+        linea = nuevaLinea;
+        columna = nuevaCol;
+        board.setCell(linea, columna, tipo);
         this.direccion = dir;
         moviendo = true;
         return true;
@@ -126,7 +166,7 @@ public class Tanque {
 
         if (ahora - tiempoUltimoDisparo >= COOLDOWN_DISPARO) {
             tiempoUltimoDisparo = ahora;
-            return new Bala(linea, columna, direccion);
+            return new Bala(linea, columna, direccion, this);
         } else {
             return null; // aún en cooldown
         }
@@ -168,6 +208,7 @@ public class Tanque {
     public int getYPix() {
         return yPix;
     }
+
     public void setPosition(int row, int col) {
         this.linea = row;
         this.columna = col;
@@ -175,7 +216,7 @@ public class Tanque {
         this.yPix = row * tamCelda;
     }
 
-    // NUEVO: renderizado suave
+    //renderizado suave
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
@@ -187,10 +228,6 @@ public class Tanque {
             case RIGHT -> Math.PI / 2;
             case DOWN -> Math.PI;
             case LEFT -> -Math.PI / 2;
-            case UP_LEFT -> 0.0;
-            case UP_RIGHT -> 0.0;
-            case DOWN_LEFT -> 0.0;
-            case DOWN_RIGHT -> 0.0;
         };
 
         AffineTransform old = g2d.getTransform(); // guardamos el estado original

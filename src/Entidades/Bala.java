@@ -11,12 +11,13 @@ public class Bala {
     private boolean active = true;
     private final int velocidad = 4; // velocidad base en píxeles
     private BufferedImage imagen;
+    private final Tanque propietario;
 
-    public Bala(int linea, int columna, Direccion direccion) {
+    public Bala(int linea, int columna, Direccion direccion, Tanque propietario) {
         this.xPix = columna * 40 + 20 - 4; // centrada
         this.yPix = linea * 40 + 20 - 4;
         this.direccion = direccion;
-
+        this.propietario = propietario;
         try {
             imagen = ImageIO.read(getClass().getResource("/Textures/bulletBeigeSilver.png"));
         } catch (IOException | IllegalArgumentException e) {
@@ -25,29 +26,11 @@ public class Bala {
     }
 
     public void mover() {
-        double diagSpeed = velocidad / Math.sqrt(2);
-
         switch (direccion) {
             case UP -> yPix -= velocidad;
             case DOWN -> yPix += velocidad;
             case LEFT -> xPix -= velocidad;
             case RIGHT -> xPix += velocidad;
-            case UP_LEFT -> {
-                yPix -= diagSpeed;
-                xPix -= diagSpeed;
-            }
-            case UP_RIGHT -> {
-                yPix -= diagSpeed;
-                xPix += diagSpeed;
-            }
-            case DOWN_LEFT -> {
-                yPix += diagSpeed;
-                xPix -= diagSpeed;
-            }
-            case DOWN_RIGHT -> {
-                yPix += diagSpeed;
-                xPix += diagSpeed;
-            }
         }
     }
 
@@ -75,4 +58,8 @@ public class Bala {
     public int getY() {
         return (int) yPix;
     }
+    public Tanque getPropietario() {
+        return propietario;
+    }
 }
+

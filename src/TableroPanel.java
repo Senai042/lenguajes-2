@@ -3,8 +3,11 @@ import Entidades.Tanque;
 import Game.Board;
 import Game.CeldaType;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.List;
 
 public class TableroPanel extends JPanel {
@@ -15,6 +18,8 @@ public class TableroPanel extends JPanel {
     private final List<Bala> balas;
     private Image fondo;
     private Image muros;
+    private BufferedImage imgObjetivo;
+
     public TableroPanel(Board board, int tamaceld, Tanque jugador, List<Tanque> enemigos,List<Bala> balas) {
         this.board = board;
         this.TAMACELD = tamaceld;
@@ -30,6 +35,12 @@ public class TableroPanel extends JPanel {
         } catch (Exception e) {
             System.err.println("Error cargando texturas: " + e.getMessage());
         }
+        try {
+            imgObjetivo = ImageIO.read(getClass().getResource("/Textures/objetivo.png"));
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("No se pudo cargar la imagen del objetivo: " + e.getMessage());
+        }
+
     }
 
     @Override
@@ -46,12 +57,16 @@ public class TableroPanel extends JPanel {
                 drawCell(g, row, col);
             }
         }
+
         for (Tanque enemigo : enemigos) {
             enemigo.draw(g);
         }
+
         jugador.draw(g);
         for (Bala bala : balas) {
-            bala.draw(g);
+            if (bala.isActive()) {
+                bala.draw(g);
+            }
         }
     }
 
@@ -75,7 +90,15 @@ public class TableroPanel extends JPanel {
             case MALOVER -> g.setColor(new Color(0, 0, 0, 0));
             case MALOROJ -> g.setColor(new Color(0, 0, 0, 0));
             case MALOGRI -> g.setColor(new Color(0, 0, 0, 0));
-            case OBJETIVO -> g.setColor(new Color(0, 0, 0, 0));
+            case OBJETIVO -> {
+                if (imgObjetivo != null) {
+                    g.drawImage(imgObjetivo, x, y, TAMACELD, TAMACELD, null);
+                } else {
+                    g.setColor(Color.MAGENTA);
+                    g.fillRect(x, y, TAMACELD, TAMACELD);
+                }
+            }
+
         }
 
         g.fillRect(x, y, TAMACELD, TAMACELD);
