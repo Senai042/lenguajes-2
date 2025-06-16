@@ -23,7 +23,8 @@ public class Juego extends JFrame {
     private final Map<Tanque, Queue<Point>> rutasEnemigos = new HashMap<>();
     private static final int DISTANCIA_UMBRAL = 6;
     private Point ultimaCelJugador = null;
-
+    private static final long WAIT_BEFORE_SEARCH = 1000;
+    private final Map<Tanque, Long> detectTimes = new HashMap<>();
 
     public Juego(MapData datos) {
         this.board = datos.board;
@@ -106,7 +107,15 @@ public class Juego extends JFrame {
 
                 // Solo si no está ya moviéndose y está dentro del umbral
                 if (!enemigo.estaMoviendo() && manh <= DISTANCIA_UMBRAL) {
-                    List<Point> ruta = GridPathfinder.bfs(
+                    long now = System.currentTimeMillis();
+                    Long firstDetected = detectTimes.get(enemigo);
+                    if (firstDetected == null) {
+                        // Primera vez que entra en rango: arrancamos el temporizador
+                        detectTimes.put(enemigo, now);
+                    } else if (now - firstDetected >= WAIT_BEFORE_SEARCH) {
+                        // Ya pasó el retardo: calculamos la ruta
+
+                        List<Point> ruta = GridPathfinder.bfs(
                             new Point(er, ec),
                             new Point(jr, jc),
                             board.getLineas(),
@@ -121,9 +130,13 @@ public class Juego extends JFrame {
                     System.out.println("► Ruta en Java (sin start): " + ruta);
 
                     rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
-                }
+                    detectTimes.remove(enemigo);
+                }}else{
+                detectTimes.remove(enemigo);
+            }
 
-                //    arrancamos el siguiente movimiento de celda:
+
+            //    arrancamos el siguiente movimiento de celda:
                 Queue<Point> cola = rutasEnemigos.get(enemigo);
                 if (cola != null && !cola.isEmpty() && !enemigo.estaMoviendo()) {
                     Point sig = cola.poll();
