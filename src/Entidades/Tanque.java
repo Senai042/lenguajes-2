@@ -31,6 +31,8 @@ public class Tanque {
     private long tiempoUltimoDisparo = 0;
     private final long COOLDOWN_DISPARO = 500; // milisegundos
 
+    public int getxPix(){return this.columna;}
+    public int getyPix(){return this.linea;}
 
     public Tanque(int row, int col, int lives, String ability, Color color, boolean isPlayer, int velocidad) {
         this.linea = row;
