@@ -196,40 +196,13 @@ public class Tanque {
         return columna;
     }
 
-    public Direccion getDireccion() {
-        return direccion;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public boolean isJugador() {
-        return jugador;
-    }
-
-    public String getHabilidad() {
-        return habilidad;
-    }
-
-    public int getVidas() {
-        return vidas;
-    }
-
     public int getXPix() {
         return xPix;
     }
 
     public int getYPix() {
         return yPix;
-    }
-
-    public void setPosition(int row, int col) {
-        this.linea = row;
-        this.columna = col;
-        this.xPix = col * tamCelda;
-        this.yPix = row * tamCelda;
-    }
+    }  
 
     //renderizado suave
     public void draw(Graphics g) {

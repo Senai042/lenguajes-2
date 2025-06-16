@@ -118,39 +118,3 @@ public class PrologConnector {
 }
 
 
-
-   /* public List<Point> buscaRuta(int xi, int yi, int xf, int yf) {
-        String varR = "R";
-        // 1) construye una única goal que borra e inserta hechos y luego llama a buscar_ruta/1
-        String goal = String.format(
-                "retractall(inicio(_,_)), retractall(objetivo(_,_)), " +
-                        "assert(inicio(%d,%d)), assert(objetivo(%d,%d)), " +
-                        "buscar_ruta(%s)",
-                xi, yi, xf, yf, varR
-        );
-
-        Query q = new Query(goal);
-        List<Point> ruta = new ArrayList<>();
-        if (!q.hasSolution()) {
-            // no hay ruta
-            return ruta;
-        }
-
-        // 2) recupera la variable R
-        Term rTerm = q.oneSolution().get(varR);
-        Term[] elems = Util.listToTermArray(rTerm);
-
-        // 3) convierte cada par (X,Y) en java.awt.Point
-        for (Term elem : elems) {
-            if (elem.isCompound() && ((Compound)elem).name().equals(",")) {
-                Compound pair = (Compound) elem;
-                int x = Integer.parseInt(pair.arg(1).toString());
-                int y = Integer.parseInt(pair.arg(2).toString());
-                ruta.add(new Point(x, y));
-            }
-        }
-        return ruta;
-    }
-
-}*/
-

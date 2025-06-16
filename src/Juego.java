@@ -240,13 +240,6 @@ public class Juego extends JFrame {
         new Juego(datos); // creamos el siguiente nivel
     }
 
-
-        private int distanciaEnCeldas (Tanque a, Tanque b){
-            int dr = Math.abs(a.getLinea() - b.getLinea());
-            int dc = Math.abs(a.getColumna() - b.getColumna());
-            return dr + dc;  // distancia Manhattan
-        }
-
         private Direccion obtenerDireccion ( int cr, int cc, int nr, int nc){
             if (nr > cr) return Direccion.DOWN;
             if (nr < cr) return Direccion.UP;
