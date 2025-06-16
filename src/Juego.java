@@ -23,7 +23,7 @@ public class Juego extends JFrame {
     private final Map<Tanque, Queue<Point>> rutasEnemigos = new HashMap<>();
     private static final int DISTANCIA_UMBRAL = 6;
     private Point ultimaCelJugador = null;
-    private static final long WAIT_BEFORE_SEARCH = 1000;
+    private static final long WAIT_BEFORE_SEARCH = 1500;
     private final Map<Tanque, Long> detectTimes = new HashMap<>();
 
     public Juego(MapData datos) {

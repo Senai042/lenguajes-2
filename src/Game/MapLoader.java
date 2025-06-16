@@ -44,7 +44,7 @@ public class MapLoader {
                         }
                         case 'R' -> {
                             board.setCell(row, col, CeldaType.MALOROJ);
-                            enemigos.add(new Tanque(row, col, 5, "Vidas", Color.RED, false, 2));
+                            enemigos.add(new Tanque(row, col, 5, "Vidas", Color.RED, false, 1));
                             valorProlog = 3;
                         }
                         case 'G' -> {
@@ -54,7 +54,7 @@ public class MapLoader {
                         }
                         case 'A' -> {
                             board.setCell(row, col, CeldaType.MALOVER);
-                            enemigos.add(new Tanque(row, col, 1, "rapido", Color.GREEN, false, 6));
+                            enemigos.add(new Tanque(row, col, 1, "rapido", Color.GREEN, false, 4));
                             valorProlog = 5;
                         }
                         case 'O' -> {
