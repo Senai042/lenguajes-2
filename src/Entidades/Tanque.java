@@ -106,37 +106,50 @@ public class Tanque {
         int nuevaLinea = linea;
         int nuevaCol = columna;
 
+        // Dirección
         switch (dir) {
             case UP -> nuevaLinea--;
             case DOWN -> nuevaLinea++;
             case LEFT -> nuevaCol--;
             case RIGHT -> nuevaCol++;
         }
-        // Primero verificamos muros
-        if (nuevaLinea < 0 ||
-                nuevaLinea >= board.getLineas() ||
-                nuevaCol < 0 ||
-                nuevaCol >= board.getColumnas()) {
+
+        // Verificar límites y muros
+        if (nuevaLinea < 0 || nuevaLinea >= board.getLineas() ||
+                nuevaCol < 0 || nuevaCol >= board.getColumnas()) {
             return false;
         }
-        if (board.getCell(nuevaLinea, nuevaCol) == CeldaType.MURO) {
+
+        if (board.getCell(nuevaLinea, nuevaCol) == CeldaType.MURO || board.getCell(nuevaLinea, nuevaCol) == CeldaType.OBJETIVO ) {
             return false;
-        }
-        // Después verificamos tanques
+        } 
+
+        // Verificar colisión con otros tanques
         for (Tanque t : otros) {
-            if (t != this && t.linea == nuevaLinea && t.columna == nuevaCol) {
+            if (t != this && t.getLinea() == nuevaLinea && t.getColumna() == nuevaCol) {
                 return false;
             }
         }
-        // Finalmente podemos mover
-        board.setCell(linea, columna, CeldaType.EMPTY);
+
+        // Limpiar celda anterior solo si no era OBJETIVO
+        if (board.getCell(linea, columna) != CeldaType.OBJETIVO) {
+            board.setCell(linea, columna, CeldaType.EMPTY);
+        }
+
+        // Actualizar posición
         linea = nuevaLinea;
         columna = nuevaCol;
-        board.setCell(linea, columna, tipo);
+
+        // Colocar tipo solo si la nueva celda no es OBJETIVO
+        if (board.getCell(linea, columna) != CeldaType.OBJETIVO) {
+            board.setCell(linea, columna, tipo);
+        }
+
         this.direccion = dir;
         moviendo = true;
         return true;
     }
+
 
     public void animarPaso() {
         int destinoX = columna * tamCelda;

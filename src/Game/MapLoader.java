@@ -1,5 +1,6 @@
 package Game;
 
+import Entidades.Objetivo;
 import Entidades.Tanque;
 import java.awt.*;
 import java.io.*;
@@ -12,6 +13,7 @@ public class MapLoader {
         Board board = null;
         Tanque jugador = null;
         int[][] matrizProlog = null;
+        Objetivo objetivo = null;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(rutaArchivo))) {
             List<String> lineas = new ArrayList<>();
@@ -57,6 +59,7 @@ public class MapLoader {
                         }
                         case 'O' -> {
                             board.setCell(row, col, CeldaType.OBJETIVO);
+                            objetivo = new Objetivo(row, col, 6); // 3 impactos para destruirlo
                             valorProlog = 9;
                         }
                         default -> {
@@ -64,7 +67,6 @@ public class MapLoader {
                             valorProlog = 0;
                         }
                     }
-
                     matrizProlog[row][col] = valorProlog;
                 }
             }
@@ -73,6 +75,6 @@ public class MapLoader {
             System.err.println("Error leyendo el mapa: " + e.getMessage());
         }
 
-        return new MapData(board, jugador, enemigos, matrizProlog);
+        return new MapData(board, jugador, enemigos, matrizProlog, objetivo);
     }
 }

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static java.awt.Color.*;
+import Entidades.Objetivo;
 
 public class Juego extends JFrame {
     private final Board board;
@@ -20,13 +20,14 @@ public class Juego extends JFrame {
     private final TableroPanel panel;
     private final List<Tanque> enemigos = new ArrayList<>();
     private final List<Bala> balas = new ArrayList<>();
+    private final Objetivo objetivo;
+
     public Juego(MapData datos) {
 
         this.board = datos.board;
         this.jugador = datos.jugador;
         this.enemigos.addAll(datos.enemigos);
-        // Crear el jugador como un Tanque
-        //.jugador = new Tanque(1, 1, 3, "nada", java.awt.Color.BLUE, true, 2); // línea, columna, vidas, habilidad, color, ¿es jugador?
+        this.objetivo = datos.objetivo;
         this.panel = new TableroPanel(board, TAMACELD, jugador, enemigos, balas);
 
         setTitle("Tanquesitos moloncitos");
@@ -105,7 +106,20 @@ public class Juego extends JFrame {
 
                     } else if (board.isWall(row, col)) {
                         bala.deactivate();
+                    }else if (objetivo != null &&
+                            row == objetivo.getFila() &&
+                            col == objetivo.getColumna()) {
+
+                        boolean destruido = objetivo.recibirDanno();
+                        bala.deactivate();
+
+                        if (destruido) {
+                            System.out.println("¡Objetivo destruido!");
+                            pasarAlSiguienteNivel();
+                            return;
+                        }
                     }
+
                 }
             }
 
@@ -151,6 +165,27 @@ public class Juego extends JFrame {
         Rectangle r1 = new Rectangle(bala.getX(), bala.getY(), 8, 8);
         Rectangle r2 = new Rectangle(tanque.getXPix(), tanque.getYPix(), 40, 40); // o tamCelda
         return r1.intersects(r2);
+    } 
+
+
+    private static int nivelActual = 1;
+
+    private void pasarAlSiguienteNivel() {
+        nivelActual++; // Avanzamos al siguiente número
+
+        String ruta = "src/mapas/nivel" + nivelActual + ".txt";
+        MapData datos = MapLoader.cargarMapa(ruta);
+
+        // Si no se encuentra el mapa, significa que el juego terminó
+        if (datos == null || datos.board == null) {
+            JOptionPane.showMessageDialog(this, "¡Felicidades! Has completado todos los niveles.");
+            System.exit(0);
+            return;
+        }
+
+        // Si el mapa sí existe, cargamos el nuevo nivel
+        dispose(); // cerramos la ventana actual
+        new Juego(datos); // creamos el siguiente nivel
     }
 
 
