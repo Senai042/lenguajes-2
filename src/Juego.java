@@ -1,14 +1,11 @@
-import Game.Board;
-import Game.CeldaType;
+import Game.*;
 import Entidades.*;
-import Game.MapData;
-import Game.MapLoader;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 import static java.awt.Color.*;
@@ -20,14 +17,22 @@ public class Juego extends JFrame {
     private final TableroPanel panel;
     private final List<Tanque> enemigos = new ArrayList<>();
     private final List<Bala> balas = new ArrayList<>();
-    public Juego(MapData datos) {
+    private final PrologConnector pc = new PrologConnector();  // Conector a Prolog
+    private final Map<Tanque, Queue<Point>> rutasEnemigos = new HashMap<>();
+    private static final int DISTANCIA_UMBRAL = 6;
+    private Point ultimaCelJugador = null;
 
+
+    public Juego(MapData datos) {
         this.board = datos.board;
         this.jugador = datos.jugador;
         this.enemigos.addAll(datos.enemigos);
+        this.pc.cargarMapa(this.board);
+
         // Crear el jugador como un Tanque
         //.jugador = new Tanque(1, 1, 3, "nada", java.awt.Color.BLUE, true, 2); // línea, columna, vidas, habilidad, color, ¿es jugador?
         this.panel = new TableroPanel(board, TAMACELD, jugador, enemigos, balas);
+        ultimaCelJugador = new Point(jugador.getLinea(), jugador.getColumna());
 
         setTitle("Tanquesitos moloncitos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,7 +47,7 @@ public class Juego extends JFrame {
 
 
         // Control de teclas para mover al jugador
-        List<Tanque> todos = new ArrayList<>(enemigos);
+        final List<Tanque> todos = new ArrayList<>(enemigos);
         todos.add(jugador);
         addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent e) {
@@ -74,20 +79,64 @@ public class Juego extends JFrame {
         });
 
         // Timer para animar suavemente al jugador
-        new javax.swing.Timer(15, e -> {
-
-
+        new Timer(20, e -> {
             // Animación jugador
             if (jugador.estaMoviendo()) {
                 jugador.animarPaso();
             }
-
+            // Recalcular ruta si el jugador cambió de celda
+            Point celActualJugador = new Point(jugador.getLinea(), jugador.getColumna());
+            if (!celActualJugador.equals(ultimaCelJugador)) {
+                rutasEnemigos.clear();  // fuerza recálculo para todos los enemigos
+                ultimaCelJugador = celActualJugador;
+            }
             // Animación enemigos
             for (Tanque enemigo : enemigos) {
+                // A) Sacar sus celdas y las del jugador
+                int er = enemigo.getLinea(), ec = enemigo.getColumna();
+                int jr = celActualJugador.x, jc = celActualJugador.y;
+                int manh = Math.abs(er - jr) + Math.abs(ec - jc);  // Calcula distancia Manhattan
+
+                // DEBUG: imprime distancia
+                System.out.printf("Enemigo@(%d,%d) — Jugador@(%d,%d) => dist=%d\n",
+                        er, ec, jr, jc, manh);
+
+                // Solo si no está ya moviéndose y está dentro del umbral
+                if (!enemigo.estaMoviendo() && manh <= DISTANCIA_UMBRAL) {
+                    List<Point> ruta = GridPathfinder.bfs(
+                            new Point(er, ec),
+                            new Point(jr, jc),
+                            board.getLineas(),
+                            board.getColumnas(),
+                            board::isWall   // referencia al método que comprueba si es muro
+                    );
+                    System.out.println("► Ruta en Java: " + ruta);
+                    //rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
+                    if (!ruta.isEmpty()) {
+                        ruta.remove(0);
+                    }
+                    System.out.println("► Ruta en Java (sin start): " + ruta);
+
+                    rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
+                }
+
+                //    arrancamos el siguiente movimiento de celda:
+                Queue<Point> cola = rutasEnemigos.get(enemigo);
+                if (cola != null && !cola.isEmpty() && !enemigo.estaMoviendo()) {
+                    Point sig = cola.poll();
+                    // sig.x = fila, sig.y = columna
+                    Direccion dir = obtenerDireccion(er, ec, sig.x, sig.y);
+                    enemigo.moverAnimado(dir, CeldaType.MALOROJ, board, todos);
+                    System.out.println("► Enemigo inicia moverAnimado " + dir);
+                }
+
+                // si está en mitad de animación, avanzamos un fotograma
                 if (enemigo.estaMoviendo()) {
                     enemigo.animarPaso();
                 }
             }
+
+
 
             // Mover balas
             for (Bala bala : balas) {
@@ -143,21 +192,36 @@ public class Juego extends JFrame {
 
             // Redibujar
             panel.repaint();
-        }).start();
 
+
+        }).start();}
+
+
+        private boolean colision (Bala bala, Tanque tanque){
+            Rectangle r1 = new Rectangle(bala.getX(), bala.getY(), 8, 8);
+            Rectangle r2 = new Rectangle(tanque.getXPix(), tanque.getYPix(), 40, 40); // o tamCelda
+            return r1.intersects(r2);
+        }
+
+
+        private int distanciaEnCeldas (Tanque a, Tanque b){
+            int dr = Math.abs(a.getLinea() - b.getLinea());
+            int dc = Math.abs(a.getColumna() - b.getColumna());
+            return dr + dc;  // distancia Manhattan
+        }
+
+        private Direccion obtenerDireccion ( int cr, int cc, int nr, int nc){
+            if (nr > cr) return Direccion.DOWN;
+            if (nr < cr) return Direccion.UP;
+            if (nc > cc) return Direccion.RIGHT;
+            if (nc < cc) return Direccion.LEFT;
+            return Direccion.UP; // fallback
+        }
+
+        public static void main (String[]args){
+            MapData datos = MapLoader.cargarMapa("src/mapas/nivel1.txt");
+            new Juego(datos);
+        }
     }
 
-    private boolean colision(Bala bala, Tanque tanque) {
-        Rectangle r1 = new Rectangle(bala.getX(), bala.getY(), 8, 8);
-        Rectangle r2 = new Rectangle(tanque.getXPix(), tanque.getYPix(), 40, 40); // o tamCelda
-        return r1.intersects(r2);
-    }
 
-
-
-    public static void main(String[] args) {
-        MapData datos = MapLoader.cargarMapa("src/mapas/nivel1.txt");
-        new Juego(datos);
-
-    }
-}
