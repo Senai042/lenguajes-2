@@ -84,112 +84,89 @@ public class Juego extends JFrame {
 
         // Timer para animar suavemente al jugador
         new Timer(20, e -> {
-            // Animación jugador
+            // --- Animar al jugador ---
             if (jugador.estaMoviendo()) {
                 jugador.animarPaso();
             }
-            // Recalcular ruta si el jugador cambió de celda
+
+            // --- Ruta: recalcular si el jugador cambia de celda ---
             Point celActualJugador = new Point(jugador.getLinea(), jugador.getColumna());
             if (!celActualJugador.equals(ultimaCelJugador)) {
-                rutasEnemigos.clear();  // fuerza recálculo para todos los enemigos
+                rutasEnemigos.clear();  // fuerza recálculo para todos
                 ultimaCelJugador = celActualJugador;
             }
-            // Animación enemigos
+
+            // --- Enemigos: animación + ruta + disparo ---
+            boolean rutaCalculadaEsteCiclo = false;
             for (Tanque enemigo : enemigos) {
-                // A) Sacar sus celdas y las del jugador
                 int er = enemigo.getLinea(), ec = enemigo.getColumna();
                 int jr = celActualJugador.x, jc = celActualJugador.y;
-                int manh = Math.abs(er - jr) + Math.abs(ec - jc);  // Calcula distancia Manhattan
+                int manh = Math.abs(er - jr) + Math.abs(ec - jc);
 
-                // DEBUG: imprime distancia
-                System.out.printf("Enemigo@(%d,%d) — Jugador@(%d,%d) => dist=%d\n",
-                        er, ec, jr, jc, manh);
-
-                // Solo si no está ya moviéndose y está dentro del umbral
                 if (!enemigo.estaMoviendo() && manh <= DISTANCIA_UMBRAL) {
                     long now = System.currentTimeMillis();
                     Long firstDetected = detectTimes.get(enemigo);
+
                     if (firstDetected == null) {
-                        // Primera vez que entra en rango: arrancamos el temporizador
-                        detectTimes.put(enemigo, now);
-                    } else if (now - firstDetected >= WAIT_BEFORE_SEARCH) {
-                        // Ya pasó el retardo: calculamos la ruta
-
+                        detectTimes.put(enemigo, now); // empieza retardo
+                    } else if (now - firstDetected >= WAIT_BEFORE_SEARCH && !rutaCalculadaEsteCiclo) {
                         List<Point> ruta = pc.buscaRuta(er, ec, jr, jc);
-                        System.out.println("► Ruta desde Prolog: " + ruta);
-                        if (ruta.isEmpty()) {
-                            System.out.println("No hay ruta disponible, enemigo se queda quieto.");
-                            detectTimes.remove(enemigo);
-                            continue;  // No hay ruta, no hacemos nada más
-                        }
+                        if (!ruta.isEmpty()) ruta.remove(0); // eliminamos la celda actual
 
-                    System.out.println("► Ruta en Java: " + ruta);
-                    //rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
-                    if (!ruta.isEmpty()) {
-                        ruta.remove(0);
+                        rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
+                        detectTimes.remove(enemigo);
+                        rutaCalculadaEsteCiclo = true;
+
+                        // 🔫 Disparo automático al jugador
+                        Bala disparo = enemigo.shoot();
+                        if (disparo != null) balas.add(disparo);
                     }
-                    System.out.println("► Ruta en Java (sin start): " + ruta);
-
-                    rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
+                } else {
                     detectTimes.remove(enemigo);
-                }}else{
-                detectTimes.remove(enemigo);
-            }
+                }
 
-
-            //    arrancamos el siguiente movimiento de celda:
+                // Movimiento automático
                 Queue<Point> cola = rutasEnemigos.get(enemigo);
                 if (cola != null && !cola.isEmpty() && !enemigo.estaMoviendo()) {
                     Point sig = cola.poll();
-                    // sig.x = fila, sig.y = columna
                     Direccion dir = obtenerDireccion(er, ec, sig.x, sig.y);
-                    enemigo.moverAnimado(dir, CeldaType.MALOROJ, board, todos);
-                    System.out.println("► Enemigo inicia moverAnimado " + dir);
+                    enemigo.moverAnimado(dir, CeldaType.MALOROJ, board, new ArrayList<>(enemigos));
                 }
 
-                // si está en mitad de animación, avanzamos un fotograma
                 if (enemigo.estaMoviendo()) {
                     enemigo.animarPaso();
                 }
             }
 
-
-
-            // Mover balas
+            // --- Balas ---
             for (Bala bala : balas) {
-                if (bala.isActive()) {
-                    bala.mover();
+                if (!bala.isActive()) continue;
 
-                    int col = bala.getX() / TAMACELD;
-                    int row = bala.getY() / TAMACELD;
+                bala.mover();
+                int col = bala.getX() / TAMACELD;
+                int row = bala.getY() / TAMACELD;
 
-                    if (bala.getX() < 0 ||
-                            bala.getX() >= board.getColumnas() * TAMACELD ||
-                            bala.getY() < 0 ||
-                            bala.getY() >= board.getLineas() * TAMACELD) {
-                        bala.deactivate();
+                if (bala.getX() < 0 || bala.getX() >= board.getColumnas() * TAMACELD ||
+                        bala.getY() < 0 || bala.getY() >= board.getLineas() * TAMACELD) {
+                    bala.deactivate();
 
-                    } else if (board.isWall(row, col)) {
-                        bala.deactivate();
-                    }else if (objetivo != null &&
-                            row == objetivo.getFila() &&
-                            col == objetivo.getColumna()) {
+                } else if (board.isWall(row, col)) {
+                    bala.deactivate();
 
-                        boolean destruido = objetivo.recibirDanno();
-                        bala.deactivate();
-
-                        if (destruido) {
-                            System.out.println("¡Objetivo destruido!");
-                            pasarAlSiguienteNivel();
-                            return;
-                        }
+                } else if (objetivo != null &&
+                        row == objetivo.getFila() &&
+                        col == objetivo.getColumna()) {
+                    boolean destruido = objetivo.recibirDanno();
+                    bala.deactivate();
+                    if (destruido) {
+                        System.out.println("¡Objetivo destruido!");
+                        pasarAlSiguienteNivel();
+                        return;
                     }
-
                 }
             }
 
-
-            // Colisiones con enemigos (y eliminar si mueren)
+            // --- Colisiones con enemigos ---
             Iterator<Tanque> it = enemigos.iterator();
             while (it.hasNext()) {
                 Tanque enemigo = it.next();
@@ -203,27 +180,24 @@ public class Juego extends JFrame {
                 }
             }
 
-            // Colisiones con jugador
+            // --- Colisión con el jugador ---
             for (Bala bala : balas) {
                 if (bala.isActive() && colision(bala, jugador) && bala.getPropietario() != jugador) {
                     boolean muerto = jugador.recibirDanno();
                     bala.deactivate();
 
                     if (muerto) {
-                        // Aquí puedes implementar lo que sucede cuando muere el jugador.
-                        System.out.println("Jugador muerto!");
-                        // Por ejemplo: finalizar el juego o mostrar pantalla de game over.
+                        JOptionPane.showMessageDialog(this, "¡Has muerto! Fin del juego.");
+                        System.exit(0);
                     }
                 }
             }
 
-            // Limiar memoria balas.
+            // Limpiar balas inactivas
             balas.removeIf(b -> !b.isActive());
 
-            // Redibujar
+            // Redibujar todo
             panel.repaint();
-
-
         }).start();}
 
 
@@ -254,18 +228,17 @@ public class Juego extends JFrame {
         new Juego(datos); // creamos el siguiente nivel
     }
 
-        private Direccion obtenerDireccion ( int cr, int cc, int nr, int nc){
-            if (nr > cr) return Direccion.DOWN;
-            if (nr < cr) return Direccion.UP;
-            if (nc > cc) return Direccion.RIGHT;
-            if (nc < cc) return Direccion.LEFT;
-            return Direccion.UP; // fallback
-        }
-
-        public static void main (String[]args){
-            MapData datos = MapLoader.cargarMapa("src/mapas/nivel1.txt");
-            new Juego(datos);
-        }
+    private Direccion obtenerDireccion ( int cr, int cc, int nr, int nc){
+        if (nr > cr) return Direccion.DOWN;
+        if (nr < cr) return Direccion.UP;
+        if (nc > cc) return Direccion.RIGHT;
+        if (nc < cc) return Direccion.LEFT;
+        return Direccion.UP; // fallback
     }
 
+    public static void main (String[]args){
+        MapData datos = MapLoader.cargarMapa("src/mapas/nivel1.txt");
+        new Juego(datos);
+    }
+}
 
