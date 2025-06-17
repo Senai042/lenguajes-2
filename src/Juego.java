@@ -115,13 +115,14 @@ public class Juego extends JFrame {
                     } else if (now - firstDetected >= WAIT_BEFORE_SEARCH) {
                         // Ya pasó el retardo: calculamos la ruta
 
-                        List<Point> ruta = GridPathfinder.bfs(
-                            new Point(er, ec),
-                            new Point(jr, jc),
-                            board.getLineas(),
-                            board.getColumnas(),
-                            board::isWall   // referencia al método que comprueba si es muro
-                    );
+                        List<Point> ruta = pc.buscaRuta(er, ec, jr, jc);
+                        System.out.println("► Ruta desde Prolog: " + ruta);
+                        if (ruta.isEmpty()) {
+                            System.out.println("No hay ruta disponible, enemigo se queda quieto.");
+                            detectTimes.remove(enemigo);
+                            continue;  // No hay ruta, no hacemos nada más
+                        }
+
                     System.out.println("► Ruta en Java: " + ruta);
                     //rutasEnemigos.put(enemigo, new LinkedList<>(ruta));
                     if (!ruta.isEmpty()) {
